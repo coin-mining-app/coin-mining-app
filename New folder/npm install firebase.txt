@@ -1,0 +1,26 @@
+coin-mining-web-8fe39
+
+
+npm install firebase
+
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCCw5eJMKbE23x4jXCYQa50cdpftAhyJ7Q",
+  authDomain: "coin-mining-web-8fe39.firebaseapp.com",
+  projectId: "coin-mining-web-8fe39",
+  storageBucket: "coin-mining-web-8fe39.firebasestorage.app",
+  messagingSenderId: "904272959004",
+  appId: "1:904272959004:web:84b60508eedf3f03d2b1d9",
+  measurementId: "G-NS1KTHRXS0"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
