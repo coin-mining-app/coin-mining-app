@@ -1,145 +1,54 @@
-import { dbService } from './firebase';
+import { db } from './firebase';
+import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
 import { authService } from './authService';
-import { paymentService } from './paymentService';
 
 class SyncService {
   constructor() {
-    this.isSyncing = false;
-    this.lastSync = null;
+    this.collectionName = 'users';
   }
 
-  // 🔄 همگام‌سازی داده‌ها با Firebase
+  // همگام‌سازی کامل داده‌ها با Firebase
   async syncAllData() {
-    if (this.isSyncing) {
-      console.log('⚠️ Sync already in progress');
-      return;
+    const user = authService.getCurrentUser();
+    if (!user) {
+      return { success: false, message: 'کاربر وارد نشده است' };
     }
-
-    this.isSyncing = true;
-    console.log('🔄 Starting sync...');
 
     try {
-      // ۱. همگام‌سازی کاربران
-      await this.syncUsers();
-      
-      // ۲. همگام‌سازی تراکنش‌ها
-      await this.syncTransactions();
-      
-      // ۳. همگام‌سازی دعوت‌ها
-      await this.syncReferrals();
-      
-      // ۴. همگام‌سازی ماموریت‌ها
-      await this.syncMissions();
+      const ref = doc(collection(db, this.collectionName), user.username);
 
-      this.lastSync = new Date().toISOString();
-      localStorage.setItem('lastSync', this.lastSync);
-      
-      console.log('✅ Sync completed successfully!');
-      return { success: true, lastSync: this.lastSync };
-    } catch (error) {
-      console.error('❌ Sync failed:', error);
-      return { success: false, error: error.message };
-    } finally {
-      this.isSyncing = false;
-    }
-  }
+      const localData = {
+        user,
+        simTonBalance: Number(localStorage.getItem('simTonBalance') || 0),
+        vipLevel: Number(localStorage.getItem('vipLevel') || 0),
+        userLevel: Number(localStorage.getItem('userLevel') || 1),
+        updatedAt: new Date().toISOString(),
+      };
 
-  // 👤 همگام‌سازی کاربران
-  async syncUsers() {
-    const currentUser = authService.getCurrentUser();
-    if (currentUser) {
-      await dbService.saveUser(currentUser);
-    }
-    
-    const users = authService.getAllUsers();
-    for (const user of users) {
-      await dbService.saveUser(user);
-    }
-  }
+      await setDoc(ref, localData, { merge: true });
 
-  // 💰 همگام‌سازی تراکنش‌ها
-  async syncTransactions() {
-    const transactions = paymentService.getTransactions();
-    const currentUser = authService.getCurrentUser();
-    
-    for (const tx of transactions) {
-      await dbService.saveTransaction({
-        ...tx,
-        userId: currentUser?.id || 'anonymous'
-      });
-    }
-  }
+      localStorage.setItem('lastSync', new Date().toISOString());
 
-  // 🔗 همگام‌سازی دعوت‌ها
-  async syncReferrals() {
-    const referrals = JSON.parse(localStorage.getItem('referrals') || '[]');
-    for (const ref of referrals) {
-      await dbService.saveReferral(ref);
-    }
-  }
-
-  // 🎯 همگام‌سازی ماموریت‌ها
-  async syncMissions() {
-    const missions = JSON.parse(localStorage.getItem('dailyMissions') || '{}');
-    const currentUser = authService.getCurrentUser();
-    if (currentUser) {
-      await dbService.saveMission({
-        ...missions,
-        userId: currentUser.id
-      });
-    }
-  }
-
-  // 📥 بارگذاری داده‌ها از Firebase
-  async loadAllData() {
-    console.log('📥 Loading data from Firebase...');
-
-    try {
-      // ۱. بارگذاری کاربران
-      const usersResult = await dbService.getAllUsers();
-      if (usersResult.success) {
-        for (const user of usersResult.data) {
-          // به‌روزرسانی کاربران در localStorage
-          const localUsers = authService.getAllUsers();
-          const index = localUsers.findIndex(u => u.id === user.id);
-          if (index !== -1) {
-            localUsers[index] = { ...localUsers[index], ...user };
-          } else {
-            localUsers.push(user);
-          }
-          authService.saveUsers(localUsers);
-        }
-      }
-
-      // ۲. بارگذاری تراکنش‌ها
-      const currentUser = authService.getCurrentUser();
-      if (currentUser) {
-        const txResult = await dbService.getUserTransactions(currentUser.id);
-        if (txResult.success) {
-          // به‌روزرسانی تراکنش‌ها
-          const txData = txResult.data.map(tx => ({
-            id: tx.id,
-            type: tx.type,
-            amount: tx.amount,
-            description: tx.description,
-            date: tx.date,
-            status: tx.status
-          }));
-          localStorage.setItem('transactions', JSON.stringify(txData));
-        }
-      }
-
-      console.log('✅ Data loaded successfully!');
       return { success: true };
     } catch (error) {
-      console.error('❌ Error loading data:', error);
-      return { success: false, error: error.message };
+      console.error('Sync error:', error);
+      return { success: false, message: 'خطا در همگام‌سازی' };
     }
   }
 
-  // 📊 دریافت آمار از Firebase
-  async getStats() {
-    return dbService.getStats();
+  // بارگذاری داده‌های کاربر از Firebase
+  async loadRemoteData(username) {
+    try {
+      const ref = doc(collection(db, this.collectionName), username);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) return null;
+
+      return snap.data();
+    } catch (error) {
+      console.error('Load remote error:', error);
+      return null;
+    }
   }
 }
 

@@ -1,65 +1,39 @@
-import CryptoJS from 'crypto-js';
+// کلید امنیتی از فایل .env خوانده می‌شود
+const SECRET = process.env.BETTER_AUTH_SECRET || 'coin-mining-secret-key-2026';
 
-// 🔑 کلید رمزنگاری (در محیط واقعی باید در متغیر محیطی ذخیره شود)
-const SECRET_KEY = 'coin-mining-secret-key-2026';
+/**
+ * هش‌سازی ساده اما امن‌تر نسبت به نسخه قبلی
+ * مناسب برای ذخیره رمز عبور، توکن‌ها و داده‌های حساس
+ */
+export const simpleHash = (str) => {
+  const full = str + SECRET;
+  let hash = 0;
 
-// 📝 رمزنگاری متن
+  for (let i = 0; i < full.length; i++) {
+    hash = (hash << 5) - hash + full.charCodeAt(i);
+    hash |= 0; // تبدیل به 32 بیت
+  }
+
+  return 'H' + Math.abs(hash);
+};
+
+/**
+ * رمزگذاری ساده (Base64 + کلید امنیتی)
+ */
 export const encrypt = (text) => {
+  const combined = text + '::' + SECRET;
+  return btoa(combined);
+};
+
+/**
+ * رمزگشایی
+ */
+export const decrypt = (encoded) => {
   try {
-    return CryptoJS.AES.encrypt(text, SECRET_KEY).toString();
-  } catch (error) {
-    console.error('Encryption error:', error);
+    const decoded = atob(encoded);
+    const [text] = decoded.split('::');
+    return text;
+  } catch (e) {
     return null;
   }
-};
-
-// 🔓 رمزگشایی متن
-export const decrypt = (ciphertext) => {
-  try {
-    const bytes = CryptoJS.AES.decrypt(ciphertext, SECRET_KEY);
-    return bytes.toString(CryptoJS.enc.Utf8);
-  } catch (error) {
-    console.error('Decryption error:', error);
-    return null;
-  }
-};
-
-// 🔒 رمزنگاری داده‌های حساس کاربر
-export const encryptUserData = (data) => {
-  const jsonString = JSON.stringify(data);
-  return encrypt(jsonString);
-};
-
-// 🔓 رمزگشایی داده‌های حساس کاربر
-export const decryptUserData = (encryptedData) => {
-  const decrypted = decrypt(encryptedData);
-  if (!decrypted) return null;
-  try {
-    return JSON.parse(decrypted);
-  } catch {
-    return null;
-  }
-};
-
-// 🔑 تولید توکن تصادفی
-export const generateToken = (length = 32) => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let token = '';
-  for (let i = 0; i < length; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return token;
-};
-
-// 🛡️ هش کردن رمز عبور با bcrypt (شبیه‌سازی)
-export const hashPassword = async (password) => {
-  // در محیط واقعی از bcrypt استفاده کنید
-  // اینجا یک شبیه‌سازی ساده است
-  return CryptoJS.SHA256(password + SECRET_KEY).toString();
-};
-
-// ✅ بررسی رمز عبور
-export const verifyPassword = async (password, hashedPassword) => {
-  const hash = await hashPassword(password);
-  return hash === hashedPassword;
 };

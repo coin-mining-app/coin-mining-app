@@ -1,10 +1,9 @@
 [build]
-  command = "npm install --legacy-peer-deps && npm run build"
+  command = "npx react-scripts build"
   publish = "build"
 
 [build.environment]
   NODE_VERSION = "18"
-  NPM_VERSION = "8"
 
 [[redirects]]
   from = "/*"

@@ -1,0 +1,10 @@
+{
+  "url": "https://YOUR-DOMAIN.COM",
+  "name": "Coin Mining App",
+  "iconUrl": "https://YOUR-DOMAIN.COM/icon.png",
+  "termsOfUseUrl": "https://YOUR-DOMAIN.COM/terms",
+  "privacyPolicyUrl": "https://YOUR-DOMAIN.COM/privacy",
+  "manifestVersion": "1.0",
+  "bridgeUrl": "https://bridge.tonapi.io/bridge",
+  "platforms": ["ios", "android", "web"]
+}
