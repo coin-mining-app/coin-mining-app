@@ -1,14 +1,10 @@
 [build]
-  command = "npm run build"
+  command = "npm install --legacy-peer-deps && npm run build"
   publish = "build"
 
 [build.environment]
   NODE_VERSION = "18"
-
-[[redirects]]
-  from = "/admin*"
-  to = "/admin/index.html"
-  status = 200
+  NPM_VERSION = "9"
 
 [[redirects]]
   from = "/*"
