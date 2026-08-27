@@ -4,9 +4,14 @@
 
 [build.environment]
   NODE_VERSION = "18"
-  NPM_VERSION = "9"
+  NPM_VERSION = "8"
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin*"
+  to = "/admin/index.html"
   status = 200
